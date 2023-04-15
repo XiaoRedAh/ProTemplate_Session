@@ -1,6 +1,24 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/xhr_blog?characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/study?characterEncoding=utf-8
     username: root
     password: cronaldo7
     driver-class-name: com.mysql.cj.jdbc.Driver
+  # 配置邮箱发送端
+  mail:
+    host:
+    username:
+    password:
+    port:
+    properties:
+     from:
+     mail:
+       smtp:
+         socketFactory:
+           class: javax.net.ssl.SSLSocketFactory
+  # 配置Redis。不配也行，反正用的是本地的，就是默认配置
+  data:
+    redis:
+      database: 0
+      host: localhost
+      port: 6379
