@@ -2,8 +2,9 @@
   <div style="width: 100vw;height: 100vh;overflow: hidden;display: flex">
     <!--左侧壁纸固定-->
     <div style="flex:1">
-      <el-image style="width: 100%;height: 100%" fit ="cover"
-                scr="../assets/img/login.png"/>
+<!--      <el-image style="width: 100%;height: 100%" fit ="cover"
+                scr="../assets/img/login.png"/>-->
+      <img style="width: 100%;height: 100%" fit ="cover" src="@/assets/img/login.png"/>
     </div>
     <div class="welcome-title">
       <div style="font-size: 30px;font-weight: bold">欢迎来到xiaoRed的网站</div>
