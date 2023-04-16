@@ -7,7 +7,7 @@
     <div style="margin-top: 50px">
       <el-form :model="form" :rules="rules" @validate="onValidate" ref="formRef">
         <el-form-item prop="username">
-          <el-input v-model="form.username" type="text" placeholder="用户名">
+          <el-input v-model="form.username" :maxlength="8" type="text" placeholder="用户名">
             <!--给输入框引入一个图标-->
             <template #prefix>
               <el-icon><User /></el-icon>
@@ -15,7 +15,7 @@
           </el-input>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="form.password" type="password" style="margin-top: 20px" placeholder="密码">
+          <el-input v-model="form.password" :maxlength="16" type="password" style="margin-top: 20px" placeholder="密码">
             <!--给输入框引入一个图标-->
             <template #prefix>
               <el-icon><Lock /></el-icon>
@@ -23,7 +23,7 @@
           </el-input>
         </el-form-item>
         <el-form-item prop="password_repeat">
-          <el-input v-model="form.password_repeat" type="password" style="margin-top: 20px" placeholder="再次输入密码">
+          <el-input v-model="form.password_repeat" :maxlength="16" type="password" style="margin-top: 20px" placeholder="再次输入密码">
             <!--给输入框引入一个图标-->
             <template #prefix>
               <el-icon><Lock /></el-icon>
@@ -50,7 +50,9 @@
                 </el-input>
               </el-col>
               <el-col :span="6">
-                <el-button type="success" :disabled="!isEmailValid" @click="validateEmail">获取验证码</el-button>
+                <el-button type="success" :maxlength="6" @click="validateEmail"
+                           :disabled="!isEmailValid || coldTime > 0" >
+                  {{coldTime > 0 ? '请稍后' + coldTime + '秒' : '获取验证码'}}</el-button>
               </el-col>
             </el-row>
           </div>
@@ -129,29 +131,44 @@ const rules ={
 const formRef = ref()
 //判断邮箱地址是否有效（默认无效），有效才能激发“获取验证码”按钮
 const isEmailValid = ref(false)
+//发送验证码的冷却时间
+const coldTime = ref(0)
 
 const onValidate= (prop, isValid) =>{
   //如果更新的属性是email
   if(prop === 'email')
     isEmailValid.value = isValid//isVaild返回的是该属性是否校验通过
 }
-//绑定给注册按钮的，只有完整且正确地填写表单才能将数据发送给后端
+//绑定给注册按钮的
 const register = ()=>{
   formRef.value.validate((isValid) =>{
+  //只有整个el-form表单完整无误，才能向后端发送注册请求，携带四个参数
     if(isValid){
-
-    }else{
+      post("/api/auth/register",{
+        username: form.username,
+        password: form.password,
+        emil: form.email,
+        code: form.code
+      },(message)=>{
+        //如果后端注册成功，页面切换到登录界面
+        ElMessage.success(message)
+        router.push('/')
+      })
+    }else{//填写表单有误，不能向后端发送post请求
       ElMessage.warning('请完整填写注册表单内容')
     }
   })
 }
-//向后端发送post请求，请求发送验证码（后端controller层对应路径下的那个函数）
+//向后端发送对应路径的post请求（发送验证码请求），携带1个参数
 const validateEmail = ()=>{
   post('/api/auth/valid-email',{
     //传给后端的参数
     email: form.email
   },(message)=>{
     ElMessage.success(message)
+    //后端发送验证码成功后，将冷却时间设为1分钟，给它个定时器，每秒-1
+    coldTime.value = 60
+    setInterval(()=>coldTime.value--, 1000)
   })
 }
 </script>

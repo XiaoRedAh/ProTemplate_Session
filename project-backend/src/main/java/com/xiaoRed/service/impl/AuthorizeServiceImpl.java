@@ -12,6 +12,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -31,6 +32,8 @@ public class AuthorizeServiceImpl implements AuthorizeService {
 
     @Resource
     StringRedisTemplate stringRedisTemplate;
+
+    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -54,15 +57,17 @@ public class AuthorizeServiceImpl implements AuthorizeService {
      * 5. 用户在注册时，再从Redis里面取出对应键值对，看验证码是否一致
      */
     @Override
-    public boolean sendValidateEmail(String email, String sessionId) {
+    public String sendValidateEmail(String email, String sessionId) {
         //生成存放在Redis中的key
         String key = "email:" + sessionId + ":" + email;
         //生成验证码前，先判断Redis中是否以已经有这个key了
         if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(key))){
             //如果剩余时间大于两分钟，那么不能发送邮件（0L是应付代码走到这，Redis对应key的键值对刚好过期的情况）
             Long expire = Optional.ofNullable(stringRedisTemplate.getExpire(key, TimeUnit.SECONDS)).orElse(0L);
-            if(expire > 120)return false;
+            if(expire > 120)return "请求频繁，请稍后再试";
         }
+        if(userMapper.findAccountByNameOrEmail(email)!=null)
+            return "此邮箱已被其他用户注册";
         //生成6位验证码
         Random random =new Random();
         int code = random.nextInt(899999) + 100000;//这样保证生成的code一定是6位数
@@ -77,10 +82,40 @@ public class AuthorizeServiceImpl implements AuthorizeService {
             mailSender.send(message);
             //往Redis数据库存键值对，有效期是3分钟
             stringRedisTemplate.opsForValue().set(key, String.valueOf(code), 3, TimeUnit.MINUTES);
-            return true;
+            return null;
         }catch (MailException e){
             e.printStackTrace();
-            return false;
+            return "邮件发送失败，请检查邮箱地址是否有效";
+        }
+    }
+
+    @Override
+    public String validateAndRegister(String username, String password, String email, String code, String sessionId) {
+        //生成Redis中的key
+        String key = "email:" + sessionId + ":" + email;
+        //判断Redis是否有这个key
+        //有这个key，说明验证码发送过了，才能通过key找验证码进行校验
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(key))){
+            //从redis中找到对应key的验证码
+            String s = stringRedisTemplate.opsForValue().get(key);
+            if(s == null) return "验证码失效，请重新请求";//特殊情况：刚找到，验证码就过期了
+            //验证码填写正确
+            if(s.equals(code)){
+                password = encoder.encode(password);//密码需要加密后存储在数据库
+                if(userMapper.createAccount(username, password, email) > 0){//插入数据库成功
+                    return null;
+                }else{//插入数据库失败
+                    return "内部错误，请联系管理员";
+                }
+            }
+            //验证码填写错误
+            else{
+                return "验证码错误，请检查后再提交";
+            }
+        }
+        //Redis中没有对应的key，说明没有发送验证码
+        else{
+            return "请先请求一封验证码邮件";
         }
     }
 }
