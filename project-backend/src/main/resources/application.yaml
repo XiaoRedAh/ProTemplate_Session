@@ -6,12 +6,12 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   # 配置邮箱发送端
   mail:
-    host:
-    username:
-    password:
-    port:
+    host: smtp.163.com
+    username: m19925651773@163.com
+    password: ZTREXUEQVBAJLDCW
+    port: 465
     properties:
-     from:
+     from: m19925651773@163.com
      mail:
        smtp:
          socketFactory:

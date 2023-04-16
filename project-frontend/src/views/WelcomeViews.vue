@@ -11,7 +11,7 @@
       <div style="margin-top: 10px">水一段话啦啦啦啦啦啦</div>
       <div style="margin-top: 5px">再水一段话啦啦啦啦啦啦</div>
     </div>
-    <!--右侧：根据路由展示登录。注册组件-->
+    <!--右侧：根据路由展示登录/注册/忘记密码组件-->
     <div style="width: 450px;text-align: center;background-color: white;z-index: 1">
       <!--根据路由切换展示的组件-->
       <router-view v-slot = "{Component}">

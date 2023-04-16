@@ -147,7 +147,7 @@ const register = ()=>{
       post("/api/auth/register",{
         username: form.username,
         password: form.password,
-        emil: form.email,
+        email: form.email,
         code: form.code
       },(message)=>{
         //如果后端注册成功，页面切换到登录界面
@@ -161,7 +161,7 @@ const register = ()=>{
 }
 //向后端发送对应路径的post请求（发送验证码请求），携带1个参数
 const validateEmail = ()=>{
-  post('/api/auth/valid-email',{
+  post('/api/auth/valid-register-email',{
     //传给后端的参数
     email: form.email
   },(message)=>{

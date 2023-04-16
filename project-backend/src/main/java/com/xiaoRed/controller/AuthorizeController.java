@@ -23,12 +23,26 @@ public class AuthorizeController {
     @Resource
     AuthorizeService authorizeService;
 
-    //发送验证码
-    @PostMapping("/valid-email")
-    public RestBean<String> validateEmail(@Pattern (regexp = EMAIL_REGEX) @RequestParam("email") String email,
+    //注册功能发送验证码
+    @PostMapping("/valid-register-email")
+    public RestBean<String> validateRegisterEmail(@Pattern (regexp = EMAIL_REGEX) @RequestParam("email") String email,
                                           HttpSession session){
         //需要传入Session的id，不然换个邮箱就绕过我设置的60秒冷却时间
-        String s = authorizeService.sendValidateEmail(email, session.getId());
+        //注册功能发送验证码要求传入的邮箱是未注册的，因此传入false
+        String s = authorizeService.sendValidateEmail(email, session.getId(), false);
+        if(s == null)
+            return RestBean.success("邮件已发送，请注意查收");
+        else
+            return RestBean.failure(400,s);
+    }
+
+    //重置密码功能发送验证码
+    @PostMapping("/valid-reset-email")
+    public RestBean<String> validateResetEmail(@Pattern (regexp = EMAIL_REGEX) @RequestParam("email") String email,
+                                          HttpSession session){
+        //需要传入Session的id，不然换个邮箱就绕过我设置的60秒冷却时间
+        //重置密码功能发送验证码要求传入的邮箱是已注册的，因此传入true
+        String s = authorizeService.sendValidateEmail(email, session.getId(), true);
         if(s == null)
             return RestBean.success("邮件已发送，请注意查收");
         else
@@ -48,4 +62,40 @@ public class AuthorizeController {
         else
             return RestBean.failure(400, s);
     }
+
+    /**
+     * 1. 发送邮件
+     * 2. redis中查验证码是否正确，正确就在Session中存一个标记
+     * 3. 用户发起重置密码请求，如果存在标记，就成功重置
+     */
+    //重置密码第一个步骤：通过邮箱认证
+    @PostMapping("/start-rest")
+    public RestBean<String> startReset(@Pattern (regexp = EMAIL_REGEX) @RequestParam("email") String email,
+                                       @Length(min = 6, max =6)@RequestParam("code") String code,
+                                       HttpSession session){
+        String s = authorizeService.validateOnly(email, code, session.getId());
+        if(s == null){
+            //验证成功，往session里存要重置密码的账户
+            session.setAttribute("reset-password", email);
+            return RestBean.success();
+        }else{
+            return RestBean.failure(400,s);
+        }
+    }
+    //重置密码第二个步骤：认证通过，重置密码
+    @PostMapping("do-reset")
+    public RestBean<String> doRest(@Length(min = 6, max =16) @RequestParam("password") String password,
+                                   HttpSession session){
+        //取session里的reset-password
+        String email = (String) session.getAttribute("reset-password");
+        if(email == null){//如果取出来为空，说明没有做验证
+            return RestBean.failure(401,"请先完成邮箱验证");
+        }else if(authorizeService.resetPassword(password, email)){//认证成功，则重置密码
+            session.removeAttribute("reset-password");//重置成功后，也要把存在session里的东西删掉
+            return RestBean.success("密码重置成功");
+        }else{
+            return RestBean.failure(500, "内部错误，请联系管理员");
+        }
+    }
+
 }
