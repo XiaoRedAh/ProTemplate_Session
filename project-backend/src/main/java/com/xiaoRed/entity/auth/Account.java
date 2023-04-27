@@ -1,4 +1,4 @@
-package com.xiaoRed.entity;
+package com.xiaoRed.entity.auth;
 
 import lombok.Data;
 

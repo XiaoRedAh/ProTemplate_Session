@@ -44,9 +44,11 @@
 import {User,Lock} from '@element-plus/icons-vue'
 import {reactive} from "vue";
 import {ElMessage} from "element-plus";
-import {post} from '@/net'
+import {get, post} from '@/net'
 import router from "@/router";
+import {useStore} from "@/stores";
 
+const store = useStore()//用户信息存储在这个全局变量中
 //绑定username,password,remember数据
 const form = reactive({
   username: '',
@@ -63,10 +65,16 @@ const login = () =>{
       username: form.username,
       password: form.password,
       remember: form.remember
-    },(message) =>{
-      //登录成功，跳转到index
+    },(message) =>{//登录成功
       ElMessage.success(message)
-      router.push('/index')
+      //先获取用户信息
+      get('/api/user/me',(message)=>{
+        //获取成功，就将用户信息存储在前端，然后才跳转到index
+        store.auth.user = message
+        router.push('/index')
+      },()=>{
+        store.auth.user = null
+      })
     })
   }
 }

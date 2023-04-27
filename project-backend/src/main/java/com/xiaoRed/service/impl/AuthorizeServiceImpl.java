@@ -1,6 +1,6 @@
 package com.xiaoRed.service.impl;
 
-import com.xiaoRed.entity.Account;
+import com.xiaoRed.entity.auth.Account;
 import com.xiaoRed.mapper.UserMapper;
 import com.xiaoRed.service.AuthorizeService;
 import jakarta.annotation.Resource;
