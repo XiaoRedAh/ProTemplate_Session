@@ -143,14 +143,19 @@ const onValidate= (prop, isValid) =>{
 }
 //向后端发送对应路径的post请求（发送验证码请求），携带1个参数
 const validateEmail = ()=>{
+  //按钮点完后就会冷却60秒，防止一直点，一直发
+  coldTime.value = 60
   post('/api/auth/valid-reset-email',{
     //传给后端的参数
     email: form.email
   },(message)=>{
     ElMessage.success(message)
-    //后端发送验证码成功后，将冷却时间设为1分钟，给它个定时器，每秒-1
-    coldTime.value = 60
+    //将冷却时间设为1分钟，给它个定时器，每秒-1
     setInterval(()=>coldTime.value--, 1000)
+  },(message)=>{
+    //如果发送失败。立即将冷却归0
+    ElMessage.warning(message)
+    coldTime.value = 0
   })
 }
 //重置密码第一步：认证邮箱

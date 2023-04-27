@@ -161,14 +161,18 @@ const register = ()=>{
 }
 //向后端发送对应路径的post请求（发送验证码请求），携带1个参数
 const validateEmail = ()=>{
+  //按钮点击后立即冷却60秒，防止点太快，发两次
+  coldTime.value = 60
   post('/api/auth/valid-register-email',{
     //传给后端的参数
     email: form.email
   },(message)=>{
     ElMessage.success(message)
-    //后端发送验证码成功后，将冷却时间设为1分钟，给它个定时器，每秒-1
-    coldTime.value = 60
     setInterval(()=>coldTime.value--, 1000)
+  },(message)=>{
+    //发送失败，冷却直接归0
+    ElMessage.warning(message)
+    coldTime.value = 0
   })
 }
 </script>
