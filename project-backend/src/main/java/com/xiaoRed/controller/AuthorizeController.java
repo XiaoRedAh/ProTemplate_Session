@@ -69,7 +69,7 @@ public class AuthorizeController {
      * 3. 用户发起重置密码请求，如果存在标记，就成功重置
      */
     //重置密码第一个步骤：通过邮箱认证
-    @PostMapping("/start-rest")
+    @PostMapping("/start-reset")
     public RestBean<String> startReset(@Pattern (regexp = EMAIL_REGEX) @RequestParam("email") String email,
                                        @Length(min = 6, max =6)@RequestParam("code") String code,
                                        HttpSession session){
