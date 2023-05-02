@@ -2,7 +2,9 @@
 
 基本的登录，注册，密码重置等功能，可以二次开发编写具体场景下的程序
 
-技术栈：SpringBoot3，Vue3，ElementPlus，正则表达式
+技术栈：SpringBoot3，SpringSecurity，Vue3，ElementPlus，正则表达式
+
+采用SpringSecurity的认证方案3+Session
 
 * 登录功能：支持用户名，邮箱登录
 * 注册用户：通过邮箱注册
